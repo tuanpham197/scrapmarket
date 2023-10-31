@@ -1,3 +1,96 @@
+## Structure of Scrap Project
+    │ scrap-market
+    │   ├── main_service (scrapmarketbe)
+    │   ├── notification_service (scrapmarketv2_notification_service)
+    │   ├── inventory_service (scrapmarketv2_inventory_service)
+    │   ├── proto (Package will push on github and download to source, link below)     
+    │   ├── docker-compose.yml
+[Repo proto](https://github.com/tuanpham197/test_repo)
+## Config client in GRPC (Use scrapmarketbe for client)
+### 1. File Config
+  ```
+  │ scrapmarketbe
+  │   ├── cmd
+  │   ├── composer
+  │   ├── ...
+  │   ├── internal
+  |   |      ├── category
+  |   |             ├── infras
+  |   |                   ├── mysql
+  |   |                   ├── rpc (rpc_hdl.go)
+  |   ├── pkg
+          ├── common
+              ├── config.go
+  ```
+#### Folder cmd
+- Init config port and server address
+  ```
+  flag.StringVar(
+		&c.grpcServerAddress,
+		"grpc-server-address",
+		"app_inventory:3300", // app_inventory is service name of inventory_service in docker-compose.yml
+		"gRPC server address. Default: app_inventory:3300",
+	)
+  ```
+
+### Folder composer
+- Init client, service and controller
+- File: grpc_client_composer.go
+  - Init connect to GRPC server
+- File: service_composer.go
+  - Init interface contain method in api_handler.go
+  - Init SQLRepo, RPCCLient, Service and Controller
+### Folder pkg/common
+- Define interface for config in folder cmd
+
+
+## Config service in GRPC (Use scrapmarketv2_inventory_service for server RPC)
+### 1. File Config
+  ```
+  │ scrapmarketbe
+  │   ├── cmd
+  │         ├── conf_comp.go
+  |         ├── handler.go     
+  │   ├── composer
+  |         ├── service_composer.go
+  │   ├── ...
+  │   ├── internal
+  |   |     ├── translate
+  |   |             ├── controller
+  |   |                   ├── api
+  |   |                   ├── rpc (rpc_handler.go)
+  |   ├── pkg
+          ├── common
+              ├── config.go
+  ```
+### Folder cmd
+- File conf_comp.go
+  - Init config port and server address
+  ```
+  func (c *config) InitFlags() {
+    flag.IntVar(
+      &c.grpcPort,
+      "grpc-port",
+      3300,
+      "gRPC Port. Default: 3300",
+    )
+
+    flag.StringVar(
+      &c.grpcServerAddress,
+      "grpc-server-address",
+      "localhost:3300",
+      "gRPC server address. Default: localhost:3300",
+    )
+  }
+  ```
+- File handler.go
+  - Start server GRPC with port config in conf_comp.go
+### Folder internal/translate/controller/rpc (Client will call method in this file)
+- Call service and return data
+
+### Folder pkg/common
+- Define interface for config in folder cmd
+
 # 1 First Run: install package 
 ```
 step1: go mod init sendo
@@ -50,5 +143,7 @@ Run test
 ```
 make run_test
 ```
- 
+
+
+   
 
