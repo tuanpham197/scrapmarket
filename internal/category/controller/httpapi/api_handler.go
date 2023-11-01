@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"sendo/internal/category/service"
 	"sendo/internal/category/service/request"
+	"sendo/pkg/constants"
 	"sendo/pkg/utils/response"
 
 	"github.com/gin-gonic/gin"
@@ -50,7 +51,7 @@ func (api apiController) GetListCategory() func(c *gin.Context) {
 
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
-				"err": "Query param fail",
+				"err": constants.ParamPassedWrong,
 			})
 			return
 		}
@@ -58,12 +59,12 @@ func (api apiController) GetListCategory() func(c *gin.Context) {
 		result, errGetList := api.service.GetListCategory(c, queryParam)
 		if errGetList != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
-				"err": "Query param fail",
+				"err": constants.WrongGetListCategory,
 			})
 			return
 		}
 
-		c.JSON(http.StatusOK, response.ResponseData(result, http.StatusOK, "Get list done"))
+		c.JSON(http.StatusOK, response.ResponseData(result, http.StatusOK, constants.GetListCategoryDone))
 	}
 }
 
@@ -100,11 +101,26 @@ func (api apiController) SearchCategory() func(c *gin.Context) {
 	}
 }
 
-func (api apiController) SetUpRoute(group *gin.RouterGroup) {
-	// middleware
-	// group.Use();
-	group.POST("/", api.AddCategory())
-	group.GET("/", api.GetListCategory())
-	group.GET("/:id", api.GetCategoryById())
-	group.GET("/search/:id", api.SearchCategory())
+func (api apiController) GetListAndChild() func(c *gin.Context) {
+	return func(c *gin.Context) {
+		var queryParam request.QueryParam
+
+		err := c.ShouldBindQuery(&queryParam)
+
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"err": "Query param fail",
+			})
+			return
+		}
+		result, errGetList := api.service.GetCategoryAndChild(c, queryParam)
+		if errGetList != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"err": "Query param fail",
+			})
+			return
+		}
+
+		c.JSON(http.StatusOK, response.ResponseData(result, http.StatusOK, "Get list done"))
+	}
 }

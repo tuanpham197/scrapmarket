@@ -1,11 +1,10 @@
 package request
 
 type CategoryCreateRequest struct {
-	Name      string `form:"name" binding:"required"`
-	Thumbnail string `form:"thumbnail" binding:"omitempty"`
-	ParentId  string `form:"parent_id" binding:"omitempty"`
-	ShopId    string `form:"shop_id" binding:"omitempty"`
-	Type      int    `form:"type" binding:"omitempty"`
+	Name      string `json:"name" binding:"required"`
+	Thumbnail string `json:"thumbnail" binding:"omitempty"`
+	ParentId  string `json:"parent_id" binding:"omitempty"`
+	Type      int    `json:"type" binding:"omitempty"`
 }
 
 type QueryParam struct {

@@ -5,8 +5,8 @@ import (
 	"errors"
 	"sendo/internal/auth/service/entity"
 	"sendo/internal/auth/service/request"
-	"sendo/pkg/common"
-	auth_util "sendo/pkg/utils/auth"
+	"sendo/pkg/constants"
+	authUtil "sendo/pkg/utils/auth"
 
 	"github.com/google/uuid"
 	"go.uber.org/zap"
@@ -18,16 +18,18 @@ type Hasher interface {
 	CompareHashPassword(hashedPassword, salt, password string) bool
 }
 
-type service struct {
+type Service struct {
 	repository UserRepository
 	hasher     Hasher
 	log        *zap.SugaredLogger
 }
 
-func NewService(repository UserRepository, hasher Hasher) service {
-	logger := common.SugarLog()
-
-	return service{
+func NewService(repository UserRepository, hasher Hasher, logger *zap.SugaredLogger) Service {
+	//errEnv := godotenv.Load("/home/nlcpu0203/source/me/sendo/scrapmarketbe/.env")
+	//if errEnv != nil {
+	//	log.Fatal("Error loading .env file 3")
+	//}
+	return Service{
 		repository,
 		hasher,
 		logger,
@@ -42,19 +44,19 @@ func NewService(repository UserRepository, hasher Hasher) service {
 // @Produce      json
 // @Success		 200	{object} request.UserLoginResponse
 // @Failure		 400	{object} error
-// @Router       /login [post]
-func (s service) Login(ctx context.Context, userLogin request.UserLogin) (*request.UserLoginResponse, error) {
+// @Router       /auth/login [post]
+func (s Service) Login(ctx context.Context, userLogin request.UserLogin) (*request.UserLoginResponse, error) {
 
 	user, err := s.repository.GetByEmail(ctx, userLogin.Email)
 
 	if err != nil {
-		return nil, err
+		return nil, constants.ErrUserNotExist
 	}
 
 	// TODO: Slow password compare by bcrypt
-	result_hash := s.hasher.CompareHashPassword(user.Password, user.Salt, userLogin.Password)
-	if !result_hash {
-		return nil, errors.New("Password wrong!")
+	resultHash := s.hasher.CompareHashPassword(user.Password, user.Salt, userLogin.Password)
+	if !resultHash {
+		return nil, constants.ErrWrongPass
 	}
 
 	var shopId *uuid.UUID
@@ -64,16 +66,16 @@ func (s service) Login(ctx context.Context, userLogin request.UserLogin) (*reque
 
 	// generate access token
 	// Assuming the login is successful, generate the tokens
-	payload := auth_util.Payload{
+	payload := authUtil.Payload{
 		UserID: user.Id,
 		ShopID: shopId,
 		Roles:  user.Roles,
 	}
-	accessToken, err := auth_util.GenerateAccessToken(&payload)
+	accessToken, err := authUtil.GenerateAccessToken(&payload)
 	if err != nil {
 		return nil, nil
 	}
-	refreshToken, err := auth_util.GenerateRefreshToken(&payload)
+	refreshToken, err := authUtil.GenerateRefreshToken(&payload)
 	if err != nil {
 		return nil, nil
 	}
@@ -103,7 +105,7 @@ func (s service) Login(ctx context.Context, userLogin request.UserLogin) (*reque
 // @Success		 200	{object} request.UserLoginResponse
 // @Failure		 400	{object} error
 // @Router       /register [post]
-func (s service) Register(ctx context.Context, userRegister request.UserRegister) (*request.UserLoginResponse, error) {
+func (s Service) Register(ctx context.Context, userRegister request.UserRegister) (*request.UserLoginResponse, error) {
 
 	// check email exists
 	user, _ := s.repository.GetByEmail(ctx, userRegister.Email)
@@ -118,6 +120,7 @@ func (s service) Register(ctx context.Context, userRegister request.UserRegister
 	}
 
 	// hash pass after call repo
+	//
 	hashPass, errHash := s.hasher.HashPassword(salt, userRegister.Password)
 	if errHash != nil {
 		return nil, errors.New("Hash password fail")
@@ -132,15 +135,15 @@ func (s service) Register(ctx context.Context, userRegister request.UserRegister
 	}
 
 	// Assuming the login is successful, generate the tokens
-	payload := auth_util.Payload{
+	payload := authUtil.Payload{
 		UserID: result.Id,
 	}
-	accessToken, err := auth_util.GenerateAccessToken(&payload)
+	accessToken, err := authUtil.GenerateAccessToken(&payload)
 	if err != nil {
 		return nil, nil
 	}
 
-	refreshToken, err := auth_util.GenerateRefreshToken(&payload)
+	refreshToken, err := authUtil.GenerateRefreshToken(&payload)
 	if err != nil {
 		return nil, nil
 	}
@@ -158,7 +161,7 @@ func (s service) Register(ctx context.Context, userRegister request.UserRegister
 	}, nil
 }
 
-// Refresh token
+// RefreshToken
 // @Summary      Refresh token
 // @Description  Refresh token
 // @Param 		 request body request.RefreshTokenRequest true "token param"
@@ -167,9 +170,9 @@ func (s service) Register(ctx context.Context, userRegister request.UserRegister
 // @Success		 200	{object} request.UserLoginResponse
 // @Failure		 400	{object} error
 // @Router       /refresh-token [post]
-func (s service) RefreshToken(ctx context.Context, token request.RefreshTokenRequest) (*request.UserLoginResponse, error) {
+func (s Service) RefreshToken(ctx context.Context, token request.RefreshTokenRequest) (*request.UserLoginResponse, error) {
 	// Verify the refresh token and extract the user ID
-	claims, err := auth_util.VerifyRefreshToken(token.RefreshToken)
+	claims, err := authUtil.VerifyRefreshToken(token.RefreshToken)
 	if err != nil {
 		return nil, request.ResponseMessageError{
 			Message: "Failed to verify token",
@@ -177,18 +180,18 @@ func (s service) RefreshToken(ctx context.Context, token request.RefreshTokenReq
 	}
 
 	// Generate a new access token
-	payload := auth_util.Payload{
+	payload := authUtil.Payload{
 		UserID: claims.UserID,
 		ShopID: claims.ShopID,
 	}
-	accessToken, err := auth_util.GenerateAccessToken(&payload)
+	accessToken, err := authUtil.GenerateAccessToken(&payload)
 	if err != nil {
 		return nil, request.ResponseMessageError{
 			Message: "Failed to generate access token",
 		}
 	}
 	// Generate new refresh token
-	refreshToken, err := auth_util.GenerateRefreshToken(&payload)
+	refreshToken, err := authUtil.GenerateRefreshToken(&payload)
 	if err != nil {
 		return nil, request.ResponseMessageError{
 			Message: "Failed to generate refresh token",
@@ -197,9 +200,7 @@ func (s service) RefreshToken(ctx context.Context, token request.RefreshTokenReq
 
 	userInfo, err := s.repository.GetOne(ctx, claims.UserID.String())
 	if err != nil {
-		return nil, request.ResponseMessageError{
-			Message: "Fail get info user",
-		}
+		return nil, constants.ErrUserNotExist
 	}
 
 	//TODO: handle revoke old acccess token
@@ -218,7 +219,7 @@ func (s service) RefreshToken(ctx context.Context, token request.RefreshTokenReq
 	}, nil
 }
 
-// Get info
+// GetInfoUser
 // @Summary      Get info
 // @Description  Get info
 // @Tags         User
@@ -226,7 +227,7 @@ func (s service) RefreshToken(ctx context.Context, token request.RefreshTokenReq
 // @Success		 200	{object} entity.User
 // @Failure		 400	{object} error
 // @Router       /users/info [post]
-func (s service) GetInfoUser(ctx context.Context, id string) (*entity.User, error) {
+func (s Service) GetInfoUser(ctx context.Context, id string) (*entity.User, error) {
 	user, err := s.repository.GetOne(ctx, id)
 	s.log.Info("Logger", zap.Any("user", user))
 	if err != nil {
@@ -236,7 +237,7 @@ func (s service) GetInfoUser(ctx context.Context, id string) (*entity.User, erro
 	return user, nil
 }
 
-// Assign role for user
+// AssignRoleUser
 // @Summary      Assign role for user
 // @Description  Assign role for user
 // @Param 		 request body request.AssignRoleUser true "login param"
@@ -246,7 +247,7 @@ func (s service) GetInfoUser(ctx context.Context, id string) (*entity.User, erro
 // @Success		 200	{object} bool
 // @Failure		 400	{object} error
 // @Router       /:id/assign-role [post]
-func (s service) AssignRoleUser(ctx context.Context, roles request.AssignRoleUser, userId string) (bool, error) {
+func (s Service) AssignRoleUser(ctx context.Context, roles request.AssignRoleUser, userId string) (bool, error) {
 	result, err := s.repository.AssignRoleUser(ctx, roles, userId)
 
 	if err != nil {
@@ -256,7 +257,7 @@ func (s service) AssignRoleUser(ctx context.Context, roles request.AssignRoleUse
 	return result, nil
 }
 
-// Login with google
+// LoginByGoogle
 // @Summary      Login with google
 // @Description  Login with google
 // @Param 		 request body request.AssignRoleUser true "login param"
@@ -266,7 +267,7 @@ func (s service) AssignRoleUser(ctx context.Context, roles request.AssignRoleUse
 // @Success		 200	{object} bool
 // @Failure		 400	{object} error
 // @Router       /:id/assign-role [post]
-func (s service) LoginByGoogle(ctx context.Context, email string) (*entity.User, error) {
+func (s Service) LoginByGoogle(ctx context.Context, email string) (*entity.User, error) {
 	// generate url call to google
 
 	//

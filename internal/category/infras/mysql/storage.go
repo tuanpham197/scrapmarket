@@ -55,7 +55,7 @@ func (repo mysqlRepo) GetList(ctx context.Context, queryParam request.QueryParam
 	// return categories, nil
 	page := queryParam.Page
 	limit := queryParam.PerPage
-	orderBy := []string{}
+	var orderBy []string
 
 	var categories []entity.Category
 	p := &paginations.Param{
@@ -87,10 +87,35 @@ func (repo mysqlRepo) FindOne(ctx context.Context, id string) (*entity.Category,
 	db := repo.db.Debug()
 	var category entity.Category
 	result := db.First(&category, "id = ?", id)
-
 	if result.Error != nil {
 		return nil, result.Error
 	}
 
 	return &category, nil
+}
+
+func (repo mysqlRepo) GetListAndChild(ctx context.Context, queryParam request.QueryParam) (*paginations.Pagination, error) {
+	query := repo.db.Model(entity.Category{})
+
+	query = query.Preload("Child").Where("parent_id", nil)
+
+	// return categories, nil
+	page := queryParam.Page
+	limit := queryParam.PerPage
+	var orderBy []string
+
+	var categories []entity.Category
+	p := &paginations.Param{
+		DB:      repo.db,
+		Query:   query,
+		Page:    page,
+		Limit:   limit,
+		OrderBy: orderBy,
+		ShowSQL: true,
+	}
+	result, err := paginations.Pagging(p, &categories)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }

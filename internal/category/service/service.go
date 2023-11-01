@@ -8,11 +8,12 @@ import (
 )
 
 type service struct {
-	repository CategoryRepository
+	repository    CategoryRepository
+	rpcRepository HelloRepository
 }
 
-func NewService(repository CategoryRepository) service {
-	return service{repository: repository}
+func NewService(repository CategoryRepository, hello HelloRepository) service {
+	return service{repository: repository, rpcRepository: hello}
 }
 
 // Add category
@@ -25,10 +26,12 @@ func NewService(repository CategoryRepository) service {
 // @Failure		 400	{object} error
 // @Router       /categories [post]
 func (s service) AddCategory(ctx context.Context, request request.CategoryCreateRequest) (*entity.Category, error) {
+	// TODO: if exists parent_id -> check valid parent
 	result, err := s.repository.Insert(ctx, request.Name, request.Thumbnail, request.ParentId)
 	if err != nil {
 		return nil, err
 	}
+
 	return result, nil
 }
 
@@ -46,7 +49,11 @@ func (s service) GetListCategory(ctx context.Context, query request.QueryParam) 
 	if err != nil {
 		return nil, err
 	}
-
+	//test, errCall := s.rpcRepository.SayHello(ctx, "back end test call")
+	//if errCall != nil {
+	//	return nil, errCall
+	//}
+	//fmt.Println(test)
 	return result, nil
 }
 
@@ -70,4 +77,22 @@ func (s service) GetCategoryById(ctx context.Context, id string) (*entity.Catego
 
 func (s service) SearchCategory(ctx context.Context, keyword string) ([]*entity.Category, error) {
 	return nil, nil
+}
+
+// GetCategoryAndChild
+// @Summary      Get category and child
+// @Description  Get category and child
+// @Param 		 request query request.QueryParam true "get list param"
+// @Tags         Category
+// @Produce      json
+// @Success		 200	{object} paginations.Pagination
+// @Failure		 400	{object} error
+// @Router       /categories/list-child [get]
+func (s service) GetCategoryAndChild(ctx context.Context, query request.QueryParam) (*paginations.Pagination, error) {
+	result, err := s.repository.GetListAndChild(ctx, query)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }

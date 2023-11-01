@@ -26,13 +26,18 @@ var (
 		Thumbnail: "test",
 	}
 
-	emptyTranslation = entity.Category{}
+	emptyListCat = []*entity.Category{}
 
 	errorCreate = errors.New("create fail")
 	ErrDB       = errors.New("db error")
 )
 
 type mockRepository struct{}
+
+func (r mockRepository) GetListAndChild(ctx context.Context, query request.QueryParam) (*paginations.Pagination, error) {
+	//TODO implement me
+	panic("implement me")
+}
 
 func (mockRepository) Insert(ctx context.Context, name, thumbnail, parentId string) (*entity.Category, error) {
 	cat := entity.Category{
@@ -44,7 +49,7 @@ func (mockRepository) Insert(ctx context.Context, name, thumbnail, parentId stri
 
 func (mockRepository) GetList(ctx context.Context, queryParam request.QueryParam) (*paginations.Pagination, error) {
 	dataSet := []entity.Category{catOne, catTwo}
-	result := []entity.Category{}
+	var result []entity.Category
 	cnt := 0
 	for _, v := range dataSet {
 		if v.Name == queryParam.Name {
@@ -76,7 +81,7 @@ func Test_Insert_Category(t *testing.T) {
 
 	// setup
 	repo := mockRepository{}
-	catSv := NewService(repo)
+	catSv := NewService(repo, nil)
 
 	Convey("Given some data to insert", t, func() {
 		testTable := []struct {
@@ -105,9 +110,14 @@ func Test_Insert_Category(t *testing.T) {
 			},
 		}
 
-		Convey("Start insert data", func() {
+		Convey("Start insert data cat", func() {
 			for i, item := range testTable {
-				cat, err := catSv.repository.Insert(context.Background(), item.name, item.thumbnail, "")
+				cat, err := catSv.AddCategory(context.Background(), request.CategoryCreateRequest{
+					Name:      item.name,
+					Thumbnail: item.thumbnail,
+					ParentId:  "",
+				})
+
 				conveySuit := fmt.Sprintf("compare with case %d", i)
 				Convey(conveySuit, func() {
 					So(err, ShouldEqual, nil)
@@ -122,6 +132,27 @@ func Test_Insert_Category(t *testing.T) {
 	})
 }
 
-// func Test_Insert_Category(t *testing.T) {
+func Test_GetListCategory(t *testing.T) {
+	repo := mockRepository{}
+	catSv := NewService(repo, nil)
 
-// }
+	Convey("Given some data to test", t, func() {
+		testTable := []struct {
+			name        string
+			parentId    string
+			expectError error
+			expectData  []*entity.Category
+		}{
+			{
+				name:        "cat 1",
+				parentId:    "",
+				expectError: nil,
+				expectData:  emptyListCat,
+			},
+		}
+
+		Convey("Start insert data cat", func() {
+
+		})
+	})
+}

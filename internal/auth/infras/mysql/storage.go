@@ -3,20 +3,21 @@ package mysql
 import (
 	"context"
 	"errors"
+	"github.com/redis/go-redis/v9"
+	"gorm.io/gorm"
 	"sendo/internal/auth/service"
 	"sendo/internal/auth/service/entity"
 	"sendo/internal/auth/service/request"
 	permissionEntity "sendo/internal/permission/service/entity"
-
-	"gorm.io/gorm"
 )
 
 type mysqlRepo struct {
-	db *gorm.DB
+	db   *gorm.DB
+	reds *redis.Client
 }
 
-func NewMySQLRepo(db *gorm.DB) service.UserRepository {
-	return mysqlRepo{db: db}
+func NewMySQLRepo(db *gorm.DB, reds *redis.Client) service.UserRepository {
+	return mysqlRepo{db: db, reds: reds}
 }
 
 func (repo mysqlRepo) GetOne(ctx context.Context, id string) (*entity.User, error) {
@@ -52,10 +53,8 @@ func (repo mysqlRepo) Delete(ctx context.Context, id string) (bool, error) {
 }
 
 func (repo mysqlRepo) GetByEmail(ctx context.Context, email string) (*entity.User, error) {
-	// Load shop and roles infomation
-	t := repo.db.Debug()
 	var user entity.User
-	err := t.Preload("Shop").Preload("Roles").First(&user, "email = ?", email).Error
+	err := repo.db.Preload("Shop").Preload("Roles").First(&user, "email = ?", email).Error
 	if err != nil {
 		return nil, err
 	}

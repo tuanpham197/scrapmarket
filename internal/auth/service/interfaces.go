@@ -7,7 +7,6 @@ import (
 )
 
 type UserUseCase interface {
-	// FetchUser(ctx context.Context) ([]entity.User, error)
 	Login(ctx context.Context, userLogin request.UserLogin) (*request.UserLoginResponse, error)
 	Register(ctx context.Context, userRegister request.UserRegister) (*request.UserLoginResponse, error)
 	RefreshToken(ctx context.Context, token request.RefreshTokenRequest) (*request.UserLoginResponse, error)

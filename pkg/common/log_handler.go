@@ -17,7 +17,12 @@ func SugarLog() *zap.SugaredLogger {
 	core := zapcore.NewCore(encoder, writerSyncer, zapcore.DebugLevel)
 
 	logger := zap.New(core)
-	defer logger.Sync()
+	defer func(logger *zap.Logger) {
+		err := logger.Sync()
+		if err != nil {
+			log.Fatalf("Failed to create log folder: %s", err.Error())
+		}
+	}(logger)
 
 	return logger.Sugar()
 }

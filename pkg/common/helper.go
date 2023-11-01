@@ -1,7 +1,13 @@
 package common
 
 import (
+	"context"
+	"encoding/json"
+	"errors"
 	"math/rand"
+	"time"
+
+	"github.com/redis/go-redis/v9"
 )
 
 func GenerateRandomString(length int) string {
@@ -11,4 +17,37 @@ func GenerateRandomString(length int) string {
 		result[i] = charset[rand.Intn(len(charset))]
 	}
 	return string(result)
+}
+
+func ConvertJSonToStruct[T any](data string, entity *T) error {
+	errDecode := json.Unmarshal([]byte(data), &entity)
+	if errDecode != nil {
+		return errors.New("can't convert json string to struct")
+	}
+
+	return nil
+}
+
+func GetDatRedis[T any](ctx context.Context, key string, data *T, redisClient *redis.Client) error {
+	dataRedis := redisClient.Get(ctx, key)
+	jsonData, _ := dataRedis.Result()
+	errConvert := ConvertJSonToStruct(jsonData, &data)
+	if errConvert != nil {
+		return errConvert
+	}
+	return nil
+}
+
+func SetDataToRedis(ctx context.Context, data interface{}, key string, expireTime time.Duration, redisClient *redis.Client) error {
+	dataEncoded, errEncode := json.Marshal(data)
+	if errEncode != nil {
+		return errEncode
+	}
+
+	statusCmd := redisClient.Set(ctx, key, dataEncoded, expireTime)
+	if statusCmd.Err() != nil {
+		return statusCmd.Err()
+	}
+
+	return nil
 }

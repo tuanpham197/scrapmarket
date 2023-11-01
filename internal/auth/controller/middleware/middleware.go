@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"sendo/pkg/constants"
+	"sendo/pkg/utils/response"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -15,7 +17,7 @@ func TokenVerificationMiddleware(c *gin.Context) {
 
 	// Check if the Authorization header is present
 	if authorizationHeader == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Missing authorization header"})
+		c.JSON(http.StatusUnauthorized, response.ErrorResponse(http.StatusUnauthorized, constants.MissingTokenHeader, nil))
 		c.Abort()
 		return
 	}
@@ -23,12 +25,12 @@ func TokenVerificationMiddleware(c *gin.Context) {
 	// Extract the token from the Authorization header
 	headerAuthorization := strings.Split(authorizationHeader, " ")
 	if len(headerAuthorization) < 2 {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid authorization header"})
+		c.JSON(http.StatusUnauthorized, response.ErrorResponse(http.StatusUnauthorized, constants.InvalidTokenHeader, nil))
 	}
 
 	tokenString := strings.TrimSpace(headerAuthorization[1])
 	if tokenString == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Missing token"})
+		c.JSON(http.StatusUnauthorized, response.ErrorResponse(http.StatusUnauthorized, constants.MissingToken, nil))
 		c.Abort()
 		return
 	}
@@ -43,37 +45,35 @@ func TokenVerificationMiddleware(c *gin.Context) {
 
 	// Check for parsing or validation errors
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+		c.JSON(http.StatusUnauthorized, response.ErrorResponse(http.StatusUnauthorized, constants.InvalidToken, nil))
 		c.Abort()
 		return
 	}
 
 	// Check if the token is valid
 	if !token.Valid {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+		c.JSON(http.StatusUnauthorized, response.ErrorResponse(http.StatusUnauthorized, constants.InvalidTokenClaim, nil))
 		c.Abort()
 		return
 	}
 
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token claims"})
+		c.JSON(http.StatusUnauthorized, response.ErrorResponse(http.StatusUnauthorized, constants.InvalidTokenClaim, nil))
 		c.Abort()
 		return
 	}
 
 	userId, ok := claims["userId"].(string)
 	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid userId claim"})
+		c.JSON(http.StatusUnauthorized, response.ErrorResponse(http.StatusUnauthorized, constants.InvalidUserIDClaim, nil))
 		c.Abort()
 		return
 	}
 
 	roles, ok := claims["roles"]
 	c.Set("roles", roles)
-
 	c.Set("userId", userId)
-
 	shopId := claims["shopId"]
 	c.Set("shopId", shopId)
 

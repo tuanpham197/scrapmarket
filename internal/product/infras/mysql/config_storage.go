@@ -13,6 +13,11 @@ type configRepo struct {
 	db *gorm.DB
 }
 
+func (repo configRepo) GetOne(ctx context.Context, req request.FormRequest) (*entity.Config, error) {
+	//TODO implement me
+	panic("implement me")
+}
+
 func NewConfigRepo(db *gorm.DB) service.ConfigRepository {
 	return configRepo{db: db}
 }

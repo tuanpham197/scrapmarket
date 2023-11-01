@@ -1,13 +1,9 @@
 package middleware
 
 import (
-	"net/http"
-	"os"
-
 	"github.com/gin-gonic/gin"
+	"net/http"
 )
-
-var SECRET_KEY = os.Getenv("SECRET_KEY")
 
 func ShopMiddleware(c *gin.Context) {
 	shopId, _ := c.Get("shopId")

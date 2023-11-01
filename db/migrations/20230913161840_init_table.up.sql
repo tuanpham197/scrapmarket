@@ -416,15 +416,15 @@ DROP TABLE IF EXISTS `users`;
 CREATE TABLE `users` (
   `id` varchar(191) NOT NULL,
   `user_name` varchar(255) DEFAULT NULL,
-  `last_name` varchar(255) DEFAULT NULL,,
-  `first_name` varchar(255) DEFAULT NULL,,
+  `last_name` varchar(255) DEFAULT NULL,
+  `first_name` varchar(255) DEFAULT NULL,
   `email` varchar(191) NOT NULL,
   `password` varchar(191) NOT NULL,
   `birthday` date DEFAULT NULL,
-  `salt` varchar(50) NOT NULL,,
+  `salt` varchar(50) NOT NULL,
   `created_at` datetime(3) DEFAULT NULL,
   `updated_at` datetime(3) DEFAULT NULL,
-  `avatar` varchar(191) DEFAULT NULL,,
+  `avatar` varchar(191) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `idx_users_id` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;

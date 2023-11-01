@@ -1,14 +1,11 @@
 package entity
 
 import (
-	"errors"
 	"time"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
-
-var ErrNotFound = errors.New("not found")
 
 type Shop struct {
 	Id        uuid.UUID `json:"id"`
@@ -19,12 +16,12 @@ type Shop struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-func NewShop(id uuid.UUID, shop_name, avatar, user_id string) Shop {
+func NewShop(id uuid.UUID, shopName, avatar, userId string) Shop {
 	return Shop{
 		Id:        id,
-		ShopName:  shop_name,
+		ShopName:  shopName,
 		Avatar:    avatar,
-		UserId:    user_id,
+		UserId:    userId,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}

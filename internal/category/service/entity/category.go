@@ -1,26 +1,24 @@
 package entity
 
 import (
-	"errors"
 	"time"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
-var ErrNotFound = errors.New("not found")
-
 type Category struct {
 	Id        uuid.UUID  `json:"id"`
 	Name      string     `json:"name"`
 	Thumbnail string     `json:"thumbnail"`
 	ParentID  *uuid.UUID `json:"parent_id"`
-	Parent    *Category  `gorm:"foreignkey:ParentID" json:"parent,omitempty"`
+	Parent    *Category  `gorm:"foreignKey:ParentID" json:"parent,omitempty"`
+	Child     []Category `gorm:"foreignKey:ParentID" json:"child" binding:"omitempty"`
 	CreatedAt time.Time  `json:"created_at"`
 	UpdatedAt time.Time  `json:"updated_at"`
 }
 
-func (Category) TableName() string {
+func (c *Category) TableName() string {
 	return "categories"
 }
 
@@ -36,10 +34,10 @@ func (c *Category) BeforeUpdate(tx *gorm.DB) (err error) {
 	return
 }
 
-func NewCategory(name, thumbnail string, parent_id, shop_id *uuid.UUID) Category {
+func NewCategory(name, thumbnail string, parentId *uuid.UUID) Category {
 	return Category{
 		Name:      name,
-		ParentID:  parent_id,
+		ParentID:  parentId,
 		Thumbnail: thumbnail,
 	}
 }

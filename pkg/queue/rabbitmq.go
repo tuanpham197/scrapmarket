@@ -2,8 +2,10 @@ package queue
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
+	"os"
 	"sendo/pkg/utils/response"
 	"time"
 
@@ -14,10 +16,10 @@ var RabbitChannel *amqp.Channel
 var RabbitConn *amqp.Connection
 
 // setup rabbit mq channel
-func SetupRabbbitMQConnectionChannel() (*amqp.Connection, *amqp.Channel) {
-	fmt.Println("Setup RabbbitMQConnection")
+func SetupRabbitMQConnectionChannel() (*amqp.Connection, *amqp.Channel) {
+
 	//dial
-	url := fmt.Sprintf("amqp://%s:%s@%s:%s/", "guest", "guest", "localhost", "5672")
+	url := fmt.Sprintf("amqp://%s:%s@%s:%s/", os.Getenv("RABBITMQ_USER"), os.Getenv("RABBITMQ_PASS"), os.Getenv("RABBITMQ_HOST"), os.Getenv("RABBITMQ_PORT"))
 
 	conn, err := amqp.Dial(url)
 
@@ -33,12 +35,13 @@ func SetupRabbbitMQConnectionChannel() (*amqp.Connection, *amqp.Channel) {
 
 }
 
-func Publish(ch *amqp.Channel, qName, text string) {
+func Publish(ch *amqp.Channel, qName string, obj interface{}) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	err := ch.PublishWithContext(ctx, "", qName, false, false, amqp.Publishing{
-		ContentType: "text/plain",
-		Body:        []byte(text),
+	serializedObj, err := json.Marshal(obj)
+	err = ch.PublishWithContext(ctx, "", qName, false, false, amqp.Publishing{
+		ContentType: "application/json",
+		Body:        serializedObj,
 	})
 	response.QueueFailOnError(err, "Failed to publish a message")
 }

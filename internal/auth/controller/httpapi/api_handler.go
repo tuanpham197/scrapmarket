@@ -1,6 +1,7 @@
 package httpapi
 
 import (
+	"errors"
 	"net/http"
 	"sendo/internal/auth/controller/middleware"
 	"sendo/internal/auth/service"
@@ -55,7 +56,8 @@ func (api apiController) Register() func(ctx *gin.Context) {
 		}
 		result, err := api.service.Register(c, userRegister)
 		if err != nil {
-			if _, ok := err.(request.UserExistsError); ok {
+			var userExistsError request.UserExistsError
+			if errors.As(err, &userExistsError) {
 				c.JSON(http.StatusBadRequest, gin.H{
 					"err": err.Error(),
 				})
@@ -187,7 +189,7 @@ func (api apiController) SetUpRoute(group *gin.RouterGroup) {
 	group.POST("/register", api.Register())
 	group.POST("/refresh-token", api.RefreshToken())
 
-	group.Use(middleware.TokenVerificationMiddleware)
+	group.Use(middleware.TokenVerificationMiddleware) // , middleware.RoleAdminMiddleware
 	group.GET("/users/info", api.GetInfoUser())
 	group.POST("/:id/assign-role", api.AssignRoleUser())
 }

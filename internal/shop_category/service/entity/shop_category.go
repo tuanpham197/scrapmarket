@@ -1,7 +1,6 @@
 package entity
 
 import (
-	"errors"
 	"time"
 
 	"sendo/internal/product/service/entity"
@@ -9,8 +8,6 @@ import (
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
-
-var ErrNotFound = errors.New("not found")
 
 type ShopCategory struct {
 	Id        uuid.UUID         `json:"id" gorm:"column:id;type:uuid;primaryKey"`
@@ -21,17 +18,17 @@ type ShopCategory struct {
 	UpdatedAt time.Time         `json:"updated_at"`
 }
 
-func NewShopCategory(id uuid.UUID, name, shop_id string) ShopCategory {
+func NewShopCategory(id uuid.UUID, name, shopId string) ShopCategory {
 	return ShopCategory{
 		Id:        id,
 		Name:      name,
-		ShopId:    shop_id,
+		ShopId:    shopId,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
 }
 
-func (ShopCategory) TableName() string {
+func (s *ShopCategory) TableName() string {
 	return "shop_categories"
 }
 

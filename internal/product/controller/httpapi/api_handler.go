@@ -2,17 +2,20 @@ package httpapi
 
 import (
 	"fmt"
+	"github.com/gin-gonic/gin"
 	"net/http"
-	authMiddleware "sendo/internal/auth/controller/middleware"
 	"sendo/internal/product/service"
 	"sendo/internal/product/service/request"
-	shopMiddleware "sendo/internal/shop/controller/middleware"
-
-	"github.com/gin-gonic/gin"
+	"sendo/pkg/constants"
+	"sendo/pkg/utils/response"
 )
 
 type productController struct {
 	productService service.ProductUseCase
+}
+
+type RequestURI struct {
+	ID string `uri:"id" binding:"required,uuid"`
 }
 
 func NewAPIController(p service.ProductUseCase) productController {
@@ -58,7 +61,6 @@ func (api productController) GetListProduct() func(ctx *gin.Context) {
 			c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 			return
 		}
-		fmt.Println("FILTER :::", catParam)
 
 		result, errGet := api.productService.GetList(c, &catParam)
 		if errGet != nil {
@@ -74,11 +76,46 @@ func (api productController) GetListProduct() func(ctx *gin.Context) {
 	}
 }
 
-func (api productController) SetUpRoute(group *gin.RouterGroup) {
+func (api productController) GetDetail() func(ctx *gin.Context) {
 
-	group.GET("/", api.GetListProduct())
+	return func(c *gin.Context) {
+		var requestUrl RequestURI
 
-	group.Use(authMiddleware.TokenVerificationMiddleware)
-	group.Use(shopMiddleware.ShopMiddleware)
-	group.POST("/create", api.InsertProduct())
+		errBinding := c.ShouldBindUri(&requestUrl)
+		if errBinding != nil {
+			c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, constants.BindingError, errBinding))
+			return
+		}
+
+		result, err := api.productService.GetDetail(c, requestUrl.ID)
+
+		if err != nil {
+			c.JSON(http.StatusNotFound, response.ErrorResponse(http.StatusNotFound, constants.NotFound, err))
+			return
+		}
+
+		c.JSON(http.StatusOK, response.ResponseData(result, http.StatusOK, fmt.Sprintf(constants.GetDetailDone, "product")))
+	}
+}
+
+func (api productController) GetConfig() func(ctx *gin.Context) {
+	return func(c *gin.Context) {
+
+		var req request.FormRequest
+
+		errBinding := c.ShouldBind(&req)
+		if errBinding != nil {
+			c.JSON(http.StatusBadRequest, response.ErrorResponse(http.StatusBadRequest, constants.BindingError, errBinding))
+			return
+		}
+
+		result, err := api.productService.GetConfigProduct(c, req.ProductId)
+
+		if err != nil {
+			c.JSON(http.StatusNotFound, response.ErrorResponse(http.StatusNotFound, constants.NotFound, err))
+			return
+		}
+
+		c.JSON(http.StatusOK, response.ResponseData(result, http.StatusOK, fmt.Sprintf(constants.GetDetailDone, "product")))
+	}
 }

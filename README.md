@@ -1,4 +1,4 @@
-## Structure of Scrap Project
+# Structure of Scrap Project
     │ scrap-market
     │   ├── main_service (scrapmarketbe)
     │   ├── notification_service (scrapmarketv2_notification_service)

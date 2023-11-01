@@ -1,18 +1,14 @@
 package entity
 
 import (
-	"errors"
 	roleEntity "sendo/internal/permission/service/entity"
 	shopEntity "sendo/internal/shop/service/entity"
 	"strings"
 	"time"
 
 	"github.com/google/uuid"
-	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
-
-var ErrNotFound = errors.New("not found")
 
 type User struct {
 	Id          uuid.UUID                `json:"id" gorm:"size:191;primary_key"`
@@ -26,17 +22,17 @@ type User struct {
 	Avatar      string                   `json:"avatar" gorm:"size:255;"`
 	CreatedAt   time.Time                `json:"created_at"`
 	UpdatedAt   time.Time                `json:"updated_at"`
-	Shop        *shopEntity.Shop         `gorm:"foreignkey:UserId" json:"shop,omitempty"`
+	Shop        *shopEntity.Shop         `gorm:"foreignKey:UserId" json:"shop,omitempty"`
 	Roles       *[]roleEntity.Role       `json:"roles,omitempty" gorm:"many2many:model_has_roles;joinForeignKey:ModelId"`
 	Permissions *[]roleEntity.Permission `json:"permissions,omitempty" gorm:"many2many:model_has_permissions;joinForeignKey:ModelId"`
 }
 
-func NewUser(id uuid.UUID, username, last_name, first_name, email, password string, result *time.Time) User {
+func NewUser(id uuid.UUID, username, lastName, firstName, email, password string, result *time.Time) User {
 	return User{
 		Id:        id,
 		UserName:  username,
-		LastName:  last_name,
-		FirstName: first_name,
+		LastName:  lastName,
+		FirstName: firstName,
 		Email:     email,
 		Password:  password,
 		Birthday:  result,
@@ -47,8 +43,6 @@ func NewUser(id uuid.UUID, username, last_name, first_name, email, password stri
 
 func (u *User) BeforeCreate(tx *gorm.DB) (err error) {
 	u.Id = uuid.New()
-
-	// Set role default for new User
 
 	return
 }
@@ -76,8 +70,8 @@ func (u *User) HasPermission(permissionTarget string) bool {
 
 	// Has role include permission
 	for _, role := range *u.Roles {
-		for _, permisson := range *role.Permissions {
-			if u.HasPermission(permisson.Name) {
+		for _, permission := range *role.Permissions {
+			if u.HasPermission(permission.Name) {
 				return true
 			}
 		}
@@ -85,19 +79,4 @@ func (u *User) HasPermission(permissionTarget string) bool {
 
 	return false
 
-}
-
-func (u *User) HashPassword(password, salt string) {
-	// Concatenate the password and salt
-	passwordWithSalt := []byte(password + salt)
-
-	// Generate the bcrypt hash of the concatenated password and salt
-	hashedPassword, err := bcrypt.GenerateFromPassword(passwordWithSalt, bcrypt.DefaultCost)
-
-	if err != nil {
-		u.Password = ""
-		return
-	}
-
-	u.Password = string(hashedPassword)
 }

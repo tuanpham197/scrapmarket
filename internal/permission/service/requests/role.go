@@ -14,3 +14,7 @@ type AssignPermissionRequest struct {
 	Permission    string `json:"permission" validate:"required_without=PermissionIds"`
 	PermissionIds []int  `json:"permission_ids" validate:"required_without=Permission"`
 }
+type RequestParam struct {
+	ID    string `json:"id" validate:"required"`
+	Order string `json:"order" validate:"required"`
+}

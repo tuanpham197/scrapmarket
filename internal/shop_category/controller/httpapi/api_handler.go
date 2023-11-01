@@ -130,7 +130,17 @@ func (api apiController) TestQueue() func(ctx *gin.Context) {
 			nil,           // arguments
 		)
 
-		queue.Publish(ch, q.Name, "Test messsage")
+		type ObjectSent struct {
+			Content   string
+			Recipient string
+		}
+
+		newObj := ObjectSent{
+			Content:   "hehee",
+			Recipient: "anh@gmailcom",
+		}
+
+		queue.Publish(ch, q.Name, newObj)
 
 		response.QueueFailOnError(err, "Failed to publish a message")
 

@@ -3,13 +3,10 @@ package common
 import (
 	"fmt"
 	"io"
-	"log"
 	"mime/multipart"
 	"os"
 
-	"github.com/joho/godotenv"
 	"github.com/minio/minio-go/v7"
-	"github.com/minio/minio-go/v7/pkg/credentials"
 	"golang.org/x/net/context"
 )
 
@@ -31,51 +28,51 @@ var policy = `{
     ]
 }`
 
-func init() {
-	errEnv := godotenv.Load(".env")
-	if errEnv != nil {
-		log.Fatalf("Error loading .env file")
-	}
-
-	var (
-		minioEndpoint  = os.Getenv("MINIO_END_POINT")
-		minioAccessKey = os.Getenv("MINIO_ACCESS_KEY")
-		minioSecretKey = os.Getenv("MINIO_SECRET_KEY")
-		minioBucket    = os.Getenv("MINIO_BUCKET")
-	)
-
-	if v, ok := os.LookupEnv("MINIO_END_POINT"); ok {
-		fmt.Printf("Database name: %s\n", v)
-	} else {
-		fmt.Println("Key does not exists")
-	}
-
-	// Initialize Client
-	ctx := context.Background()
-	client, err := minio.New(minioEndpoint, &minio.Options{
-		Creds:  credentials.NewStaticV4(minioAccessKey, minioSecretKey, ""),
-		Secure: false,
-	})
-	if err != nil {
-		panic(err)
-	}
-
-	minioClient = client
-
-	// Create the MinIO bucket if it doesn't exist
-	err = minioClient.MakeBucket(ctx, minioBucket, minio.MakeBucketOptions{})
-	if err != nil {
-		exists, errBucketExists := minioClient.BucketExists(ctx, minioBucket)
-		if errBucketExists == nil && exists {
-			// handle set policy for bucket
-			policyBucket := fmt.Sprintf(policy, minioBucket)
-			minioClient.SetBucketPolicy(ctx, minioBucket, policyBucket)
-			log.Printf("We already own %s\n", minioBucket)
-		} else {
-			log.Fatalln(err)
-		}
-	}
-}
+//func init() {
+//	errEnv := godotenv.Load("/home/nlcpu0203/source/me/sendo/scrapmarketbe/.env")
+//	if errEnv != nil {
+//		log.Fatalf("Error loading .env file 1", errEnv)
+//	}
+//
+//	var (
+//		minioEndpoint  = os.Getenv("MINIO_END_POINT")
+//		minioAccessKey = os.Getenv("MINIO_ACCESS_KEY")
+//		minioSecretKey = os.Getenv("MINIO_SECRET_KEY")
+//		minioBucket    = os.Getenv("MINIO_BUCKET")
+//	)
+//
+//	if v, ok := os.LookupEnv("MINIO_END_POINT"); ok {
+//		fmt.Printf("Database name: %s\n", v)
+//	} else {
+//		fmt.Println("Key does not exists")
+//	}
+//
+//	// Initialize Client
+//	ctx := context.Background()
+//	client, err := minio.New(minioEndpoint, &minio.Options{
+//		Creds:  credentials.NewStaticV4(minioAccessKey, minioSecretKey, ""),
+//		Secure: false,
+//	})
+//	if err != nil {
+//		panic(err)
+//	}
+//
+//	minioClient = client
+//
+//	// Create the MinIO bucket if it doesn't exist
+//	err = minioClient.MakeBucket(ctx, minioBucket, minio.MakeBucketOptions{})
+//	if err != nil {
+//		exists, errBucketExists := minioClient.BucketExists(ctx, minioBucket)
+//		if errBucketExists == nil && exists {
+//			// handle set policy for bucket
+//			policyBucket := fmt.Sprintf(policy, minioBucket)
+//			minioClient.SetBucketPolicy(ctx, minioBucket, policyBucket)
+//			log.Printf("We already own %s\n", minioBucket)
+//		} else {
+//			log.Fatalln(err)
+//		}
+//	}
+//}
 
 func CreateBucket(ctx context.Context, minioBucket string) (bool, error) {
 	exists, errBucketExists := minioClient.BucketExists(ctx, minioBucket)

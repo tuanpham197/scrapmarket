@@ -1,14 +1,20 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
-
+	"sendo/cmd"
+	"sendo/db/connections"
+	"sendo/pkg/queue"
 	"time"
+
+	sctx "github.com/viettranx/service-context"
+
+	"github.com/redis/go-redis/v9"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
-	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 
 	_ "sendo/docs"
@@ -26,6 +32,14 @@ import (
 )
 
 const FE_URL = "*"
+const DEFAULT_RETRY_CONNECT = 5
+
+func newServiceCtx() sctx.ServiceContext {
+	return sctx.NewServiceContext(
+		sctx.WithName("Demo Microservices"),
+		sctx.WithComponent(cmd.NewConfig()),
+	)
+}
 
 // @title           Sendo fake
 // @version         1.0
@@ -41,16 +55,16 @@ const FE_URL = "*"
 // @host      localhost:4040
 // @BasePath  /api/v1
 func main() {
-
-	// Set timezone
-	os.Setenv("TZ", "Asia/Ho_Chi_Minh")
-
-	db, err := connectDBWithRetry(5)
-
+	// Init service context
+	serviceCtx := newServiceCtx()
+	db, err := connectDBWithRetry(DEFAULT_RETRY_CONNECT)
 	if err != nil {
 		log.Fatalln(err)
 	}
+
 	engine := gin.Default()
+
+	queue.SetupRabbitMQConnectionChannel()
 
 	// SETUP CORS
 	configCors(engine)
@@ -62,7 +76,8 @@ func main() {
 	engine.Use(common.Recover())
 
 	v1 := engine.Group("/api/v1")
-	router.InitRouter(v1, db)
+	rdb, _ := connectRedis()
+	router.InitRouter(v1, db, rdb, serviceCtx)
 	if err := engine.Run(); err != nil {
 		log.Fatalln(err)
 	}
@@ -71,8 +86,7 @@ func main() {
 
 func configCors(engine *gin.Engine) {
 	config := cors.DefaultConfig()
-	config.AllowOrigins = []string{FE_URL}                         // Specify the allowed origins
-	config.AllowMethods = []string{"GET", "POST", "PUT", "DELETE"} // Specify the allowed HTTP methods
+	config.AllowOrigins = []string{FE_URL} // Specify the allowed origins
 	config.AllowHeaders = []string{"*"}
 	engine.Use(cors.New(config))
 }
@@ -81,30 +95,29 @@ func connectDBWithRetry(times int) (*gorm.DB, error) {
 	var e error
 
 	for i := 1; i <= times; i++ {
-		dsn := os.Getenv("MYSQL_DSN")
-		db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+		db, err := connections.GetInstance()
 
 		if err == nil {
-			// sqlDB, err := db.DB()
-			// if err != nil {
-			// 	return nil, err
-			// }
-
-			// // Check max connection mysql allowed: select @@max_connections
-			// // Default: select @@max_connections = 151
-			// // SetMaxIdleConns sets the maximum number of connections in the idle connection pool.
-			// sqlDB.SetMaxIdleConns(10)
-
-			// // SetMaxOpenConns sets the maximum number of open connections to the database.
-			// sqlDB.SetMaxOpenConns(100)
-
 			return db, nil
 		}
-
 		e = err
-
 		time.Sleep(time.Second * 2)
 	}
 
 	return nil, e
+}
+
+func connectRedis() (*redis.Client, error) {
+	strConn := fmt.Sprintf("%s:%s", os.Getenv("REDIS_HOST"), os.Getenv("REDIS_PORT"))
+	rdb := redis.NewClient(&redis.Options{
+		Addr:     strConn,
+		Password: os.Getenv("REDIS_PASSWORD"), // no password set
+		DB:       0,                           // use default DB
+	})
+
+	if rdb == nil {
+		log.Fatal("error connect redis")
+		return nil, nil
+	}
+	return rdb, nil
 }

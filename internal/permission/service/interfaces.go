@@ -19,9 +19,9 @@ type RoleRepository interface {
 }
 
 type Permission interface {
-	CreatePermission(ctx context.Context, name, guard_name string) (*entity.Permission, error)
+	CreatePermission(ctx context.Context, name, guardName string) (*entity.Permission, error)
 }
 
 type PermissionRepository interface {
-	CreatePermission(ctx context.Context, name, guard_name string) (*entity.Permission, error)
+	CreatePermission(ctx context.Context, name, guardName string) (*entity.Permission, error)
 }

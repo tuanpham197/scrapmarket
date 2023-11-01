@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"sendo/internal/product/service/entity"
 	"sendo/internal/product/service/request"
 	"sendo/pkg/utils/paginations"
 )
@@ -57,4 +58,22 @@ func (p productService) GetList(ctx context.Context, filter *request.FilterReque
 	}
 
 	return result, nil
+}
+
+func (p productService) GetDetail(ctx context.Context, id string) (*entity.Product, error) {
+	product, err := p.productRepository.GetDetail(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	return product, nil
+}
+
+func (p productService) GetConfigProduct(ctx context.Context, productId string) (*[]entity.Config, error) {
+	product, err := p.productRepository.GetConfigProduct(ctx, productId)
+	if err != nil {
+		return nil, err
+	}
+
+	return product, nil
 }

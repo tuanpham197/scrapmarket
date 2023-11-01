@@ -152,3 +152,34 @@ func (repo productRepo) GetList(ctx context.Context, filter *request.FilterReque
 	return result, nil
 
 }
+
+func (repo productRepo) GetDetail(ctx context.Context, id string) (*entity.Product, error) {
+	var product entity.Product
+	db := repo.db.Debug()
+	query := db.Model(&product)
+
+	query.Preload("Variant")
+
+	err := query.First(&product, "id = ?", id).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return &product, nil
+}
+
+func (repo productRepo) GetConfigProduct(ctx context.Context, productId string) (*[]entity.Config, error) {
+	var config []entity.Config
+	db := repo.db.Debug()
+
+	query := db.Model(&config)
+	err := query.Preload("ConfigValues").
+		Where("product_id = ?", productId).
+		Find(&config).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &config, nil
+}

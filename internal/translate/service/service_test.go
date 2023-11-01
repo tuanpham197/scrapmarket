@@ -108,7 +108,7 @@ func TestService_Translate(t *testing.T) {
 			t.Errorf("Failed. Expected %v but received %v", item.expectData, realData)
 		}
 
-		if realErr != item.expectError {
+		if !errors.Is(realErr, item.expectError) {
 			t.Errorf("Failed. Expected %v but received %v", item.expectData, realData)
 		}
 	}

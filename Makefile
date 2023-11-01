@@ -11,7 +11,10 @@ migrate_up:
 
 migrate_down:
 	migrate -database "mysql://root:@tcp(localhost:3301)/sendo_db" -path db/migrations down
-
+build_proto:
+	protoc --proto_path=path_file_proto --go_out=folder_out --go_opt=paths=source_relative \
+    --go-grpc_out=folder_out --go-grpc_opt=paths=source_relative \
+    file_proto_name
 run_test:
 	go test -v -cover ./internal/translate/service
 	go test -v -cover ./internal/category/service

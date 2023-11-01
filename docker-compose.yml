@@ -1,23 +1,23 @@
 version: "3.7"
 
 services:
-  app:
-    image: acim/go-reflex
-    environment:
-      - RACE_DETECTOR=1
-      - GOFLAGS="-buildvcs=false"
-      - MYSQL_DSN=root:@tcp(mysql:3306)/sendo_db?charset=utf8mb4&parseTime=True&loc=Local
-    volumes:
-      - .:/app
-    ports:
-      - 4040:8080
-    depends_on:
-      mysql:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-    networks:
-      - intranet
+  # app:
+  #   image: acim/go-reflex
+  #   environment:
+  #     - RACE_DETECTOR=1
+  #     - GOFLAGS="-buildvcs=false"
+  #     - MYSQL_DSN=root:@tcp(mysql:3306)/sendo_db?charset=utf8mb4&parseTime=True&loc=Local
+  #   volumes:
+  #     - .:/app
+  #   ports:
+  #     - 4040:8080
+  #   depends_on:
+  #     mysql:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_healthy
+  #   networks:
+  #     - intranet
   # app:
   #   build:
   #     dockerfile: Dockerfile

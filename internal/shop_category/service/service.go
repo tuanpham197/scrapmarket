@@ -37,7 +37,7 @@ func (s shopCategoryService) CreateShopCategory(ctx context.Context, createShopC
 	}, nil
 }
 
-// UpdateShopCategory      UpdateShopCategory
+// UpdateShopCategory
 // @Summary      UpdateShopCategory
 // @Description  UpdateShopCategory
 // @Param 		 id path string  true  "ID"
@@ -57,7 +57,7 @@ func (s shopCategoryService) UpdateShopCategory(ctx context.Context, updateShopC
 	return result, nil
 }
 
-// Delete        Delete
+// DeleteShopCategory
 // @Summary      Delete shop category
 // @Description  Delete shop category
 // @Param 		 id path string true "Shop category id"

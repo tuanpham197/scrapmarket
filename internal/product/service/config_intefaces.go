@@ -12,4 +12,5 @@ type ConfigUseCase interface {
 
 type ConfigRepository interface {
 	InsertConfig(ctx context.Context, createConfig request.CreateConfig) (*entity.Config, error)
+	GetOne(ctx context.Context, req request.FormRequest) (*entity.Config, error)
 }

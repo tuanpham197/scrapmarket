@@ -8,16 +8,17 @@ import (
 )
 
 type Product struct {
-	Id          uuid.UUID `json:"id" gorm:"column:id;type:uuid;primaryKey"`
-	Name        string    `json:"name"`
-	ShopId      string    `json:"shop_id"`
-	CategoryId  string    `json:"category_id"`
-	ThumbNail   string    `json:"thumbnail" gorm:"column:thumbnail"`
-	Price       float32   `json:"price"`
-	SalePrice   float32   `json:"sale_price"`
-	Description string    `json:"description"`
-	CreatedAt   time.Time `json:"created_at"`
-	UpdatedAt   time.Time `json:"updated_at"`
+	Id          uuid.UUID  `json:"id" gorm:"column:id;type:uuid;primaryKey"`
+	Name        string     `json:"name"`
+	ShopId      string     `json:"shop_id"`
+	CategoryId  string     `json:"category_id" binding:"omitempty" gorm:"column:category_id"`
+	ThumbNail   string     `json:"thumbnail" gorm:"column:thumbnail"`
+	Price       float32    `json:"price"`
+	SalePrice   float32    `json:"sale_price"`
+	Variant     *[]Variant `json:"variant" gorm:"foreignKey:ProductId;references:id"`
+	Description string     `json:"description"`
+	CreatedAt   time.Time  `json:"created_at"`
+	UpdatedAt   time.Time  `json:"updated_at"`
 }
 
 func NewProduct(id uuid.UUID, name, shopId, thumbnail, description string, price, salePrice float32) Product {
@@ -34,7 +35,7 @@ func NewProduct(id uuid.UUID, name, shopId, thumbnail, description string, price
 	}
 }
 
-func (Product) TableName() string {
+func (s *Product) TableName() string {
 	return "products"
 }
 

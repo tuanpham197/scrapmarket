@@ -6,7 +6,12 @@ type CreateConfig struct {
 }
 
 type CreateConfigResponse struct {
-	Id     string `json:"id"`
-	Name   string `json:"name"`
-	ShopId string `json:"shop_id"`
+	Id        string `json:"id"`
+	Name      string `json:"name"`
+	ShopId    string `json:"shop_id"`
+	ProductId string `json:"product_id"`
+}
+
+type FormRequest struct {
+	ProductId string `form:"product_id"`
 }

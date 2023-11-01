@@ -14,8 +14,8 @@ type apiController struct {
 	roleService service.RoleUseCase
 }
 
-func NewAPIController(s service.RoleUseCase) apiController {
-	return apiController{roleService: s}
+func NewAPIController(roleService service.RoleUseCase) apiController {
+	return apiController{roleService}
 }
 
 func (api apiController) Create() func(c *gin.Context) {
@@ -101,7 +101,7 @@ func (api apiController) RevokePermissionTo() func(c *gin.Context) {
 func (api apiController) SetUpRoute(group *gin.RouterGroup) {
 	// middleware
 	group.Use(middleware.TokenVerificationMiddleware)
-	group.POST("/", api.Create())
+	group.POST("", api.Create())
 	group.POST("/:roleId/assign-permission", api.GivePermissionTo())
 	group.POST("/revoke", api.RevokePermissionTo())
 }
